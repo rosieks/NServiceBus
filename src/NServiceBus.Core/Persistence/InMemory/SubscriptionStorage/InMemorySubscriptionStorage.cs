@@ -15,16 +15,8 @@ namespace NServiceBus.InMemory.SubscriptionStorage
         {
             messageTypes.ToList().ForEach(m =>
             {
-                List<Address> list;
-                if (!storage.TryGetValue(m, out list))
-                {
-                  storage[m] = list = new List<Address>();
-                }
-
-                if (!list.Contains(address))
-                {
-                    list.Add(address);
-                }
+                var dict = storage.GetOrAdd(m, type => new ConcurrentDictionary<Address, object>());
+                dict.AddOrUpdate(address, dummy, (address1, o) => dummy);
             });
         }
 
@@ -32,34 +24,36 @@ namespace NServiceBus.InMemory.SubscriptionStorage
         {
             messageTypes.ToList().ForEach(m =>
             {
-                List<Address> list;
-                if (storage.TryGetValue(m, out list))
+                ConcurrentDictionary<Address, object> dict;
+                if (storage.TryGetValue(m, out dict))
                 {
-                    list.Remove(address);
+                    object _;
+                    dict.TryRemove(address, out _);
                 }
             });
         }
 
-
         IEnumerable<Address> ISubscriptionStorage.GetSubscriberAddressesForMessage(IEnumerable<MessageType> messageTypes)
         {
-            var result = new List<Address>();
+            var result = new HashSet<Address>();
             messageTypes.ToList().ForEach(m =>
             {
-                List<Address> list;
+                ConcurrentDictionary<Address, object> list;
                 if (storage.TryGetValue(m, out list))
                 {
-                    result.AddRange(list);
+                    result.UnionWith(list.Keys);
                 }
             });
-
-            return result.Distinct();
+            return result;
         }
 
         public void Init()
         {
         }
 
-        readonly ConcurrentDictionary<MessageType, List<Address>> storage = new ConcurrentDictionary<MessageType, List<Address>>();
+        readonly ConcurrentDictionary<MessageType, ConcurrentDictionary<Address, object>> storage = new ConcurrentDictionary<MessageType, ConcurrentDictionary<Address, object>>();
+        
+        // The ConcurrentDictionary instance serves here just as a ConcurrentSet, so we reuse the values
+        static readonly object dummy = new object();
     }
 }
