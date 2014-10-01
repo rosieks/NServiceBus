@@ -16,7 +16,7 @@ namespace NServiceBus.InMemory.SubscriptionStorage
             messageTypes.ToList().ForEach(m =>
             {
                 var dict = storage.GetOrAdd(m, type => new ConcurrentDictionary<Address, object>());
-                dict.AddOrUpdate(address, dummy, (address1, o) => dummy);
+                dict.AddOrUpdate(address, null, (address1, o) => null);
             });
         }
 
@@ -52,8 +52,5 @@ namespace NServiceBus.InMemory.SubscriptionStorage
         }
 
         readonly ConcurrentDictionary<MessageType, ConcurrentDictionary<Address, object>> storage = new ConcurrentDictionary<MessageType, ConcurrentDictionary<Address, object>>();
-        
-        // The ConcurrentDictionary instance serves here just as a ConcurrentSet, so we reuse the values
-        static readonly object dummy = new object();
     }
 }
