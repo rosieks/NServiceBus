@@ -30,7 +30,7 @@
         {
             var settings = runDescriptor.Settings;
 
-            LogManager.UseFactory(new ContextAppender(runDescriptor.ScenarioContext));
+            LogManager.UseFactory(new ContextAppender(runDescriptor.ScenarioContext, endpointConfiguration.EndpointName));
 
             var types = GetTypesScopedByTestClass(endpointConfiguration);
 
@@ -43,6 +43,7 @@
             builder.CustomConfigurationSource(configSource);
             builder.EnableInstallers();
             builder.DefineTransport(settings);
+            builder.DefineTransactions(settings);
             builder.DefineBuilder(settings);
             builder.RegisterComponents(r =>
             {

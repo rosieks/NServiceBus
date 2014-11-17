@@ -26,7 +26,7 @@ namespace NServiceBus.Unicast
     /// </summary>
     public partial class UnicastBus : IStartableBus, IInMemoryOperations, IManageMessageHeaders
     {
-        HostInformation hostInformation = HostInformation.CreateDefault();
+        HostInformation hostInformation;
 
         /// <summary>
         /// Initializes a new instance of <see cref="UnicastBus"/>.
@@ -132,6 +132,7 @@ namespace NServiceBus.Unicast
         /// <summary>
         /// Provides access to the current host information
         /// </summary>
+        [ObsoleteEx(Message = "We have introduced a more explicit API to set the host identifier, see busConfiguration.UniquelyIdentifyRunningInstance()", TreatAsErrorFromVersion = "6", RemoveInVersion = "7")]
         public HostInformation HostInformation
         {
             get { return hostInformation; }
@@ -631,7 +632,7 @@ namespace NServiceBus.Unicast
 
         ICallback SetupCallback(string transportMessageId)
         {
-            var result = new NServiceBus.Callback(transportMessageId);
+            var result = new NServiceBus.Callback(transportMessageId, Settings.GetOrDefault<bool>("Endpoint.SendOnly"));
             result.Registered += delegate(object sender, BusAsyncResultEventArgs args)
             {
                 //TODO: what should we do if the key already exists?
@@ -809,7 +810,6 @@ namespace NServiceBus.Unicast
 
             started = false;
         }
-
 
         void TransportStartedMessageProcessing(object sender, StartedMessageProcessingEventArgs e)
         {

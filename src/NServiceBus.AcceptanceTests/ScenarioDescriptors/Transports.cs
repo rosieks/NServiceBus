@@ -12,9 +12,12 @@
         {
             get
             {
-                if (availableTransports == null)
+                lock (lockObject)
                 {
-                    availableTransports = GetAllAvailable().ToList();
+                    if (availableTransports == null)
+                    {
+                        availableTransports = GetAllAvailable().ToList();
+                    }
                 }
 
                 return availableTransports;
@@ -40,7 +43,7 @@
             }
         }
 
-        static RunDescriptor Msmq
+        public static RunDescriptor Msmq
         {
             get { return AllAvailable.SingleOrDefault(r => r.Key == "MsmqTransport"); }
         }
@@ -83,6 +86,7 @@
         }
 
         static IList<RunDescriptor> availableTransports;
+        static readonly object lockObject = new object();
 
         static readonly Dictionary<string, string> DefaultConnectionStrings = new Dictionary<string, string>
             {
